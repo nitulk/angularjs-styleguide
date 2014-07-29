@@ -22,7 +22,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
 ## Folder structure
 
-```txt
+```
 app/
 |_module1/
   |_configs/
@@ -42,6 +42,7 @@ app/
   |_app.js
 |_...
 |_app.js
+```
 
 - Put all angular blocks (controllers, directives, services, etc.) in their own files and `require()` them from their module's app.js
 - Prefix all files with the module name to avoid name collisions when multiple modules are running within the same app
