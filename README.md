@@ -7,11 +7,11 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 > See the [original article](http://toddmotto.com/opinionated-angular-js-styleguide-for-teams)
 
 ## Table of Contents
-
+  
+  1. [Folder structure](#folder-structure)
   1. [Modules](#modules)
   1. [Controllers](#controllers)
   1. [Services](#services)
-  1. [Factory](#factory)
   1. [Directives](#directives)
   1. [Filters](#filters)
   1. [Routing resolves](#routing-resolves)
@@ -19,6 +19,35 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
   1. [Angular wrapper references](#angular-wrapper-references)
   1. [Comment standards](#comment-standards)
   1. [Minification and annotation](#minification-and-annotation)
+
+## Folder structure
+
+```txt
+app/
+|_module1/
+  |_configs/
+    |_module1RoutesConfig.js
+  |_controllers/
+    |_module1BarController.js
+    |_module1FooController.js
+  |_directives/
+    |_module1Foo.js
+  |_factories/
+    |_module1FooFactory.js
+  |_runs/
+    |_module1Baz.js
+  |_app.js
+|_module2/
+  |_...
+  |_app.js
+|_...
+|_app.js
+
+- Put all angular blocks (controllers, directives, services, etc.) in their own files and `require()` them from their module's app.js
+- Prefix all files with the module name to avoid name collisions when multiple modules are running within the same app
+- Suffix config, controller, factory, provider, run, and service file names with the type of angular construct (eg. `Factory`, `Service`, etc.)
+
+```
 
 ## Modules
 
@@ -39,69 +68,31 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
   - Note: Using `angular.module('app', []);` sets a module, whereas `angular.module('app');` gets the module. Only set once and get for all other instances.
 
-  - **Methods**: Pass functions into module methods rather than assign as a callback
+  - **Methods**: Pass requires into module methods rather than assign as an inline callback
 
     ```javascript
     // bad
     angular
       .module('app', [])
-      .controller('MainCtrl', function MainCtrl () {
-
+      .controller('MainCtrl', function () {
+        ...
       })
-      .service('SomeService', function SomeService () {
-
+      .service('SomeService', function () {
+        ...
       });
 
     // good
-    function MainCtrl () {
-
-    }
-    function SomeService () {
-
-    }
     angular
       .module('app', [])
-      .controller('MainCtrl', MainCtrl)
-      .service('SomeService', SomeService);
+      .controller('MainCtrl', require('./controllers/foo'))
+      .service('SomeService', require('./services/foo'));
     ```
 
   - This aids with readability and reduces the volume of code "wrapped" inside the Angular framework
-  
-  - **IIFE scoping**: To avoid polluting the global scope with our function declarations which get passed into Angular, ensure build tasks wrap the concatenated files inside an IIFE
-  
-    ```javascript
-    (function () {
-
-      angular
-        .module('app', []);
-      
-      // MainCtrl.js
-      function MainCtrl () {
-
-      }
-      
-      angular
-        .module('app')
-        .controller('MainCtrl', MainCtrl);
-      
-      // SomeService.js
-      function SomeService () {
-
-      }
-      
-      angular
-        .module('app')
-        .service('SomeService', SomeService);
-        
-      // ...
-        
-    })();
-    ```
-
 
 **[Back to top](#table-of-contents)**
 
-## Controllers
+## Controllers (*angular 1.2+ only*)
 
   - **controllerAs syntax**: Controllers are classes, so use the `controllerAs` syntax at all times
 
@@ -141,53 +132,11 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
   - Only use `$scope` in `controllerAs` when necessary, for example publishing and subscribing events using `$emit`, `$broadcast`, `$on` or using `$watch`, try to limit the use of these, however and treat `$scope` uses as special
 
-  - **Inheritance**: Use prototypal inheritance when extending controller classes
-
-    ```javascript
-    function BaseCtrl () {
-      this.doSomething = function () {
-
-      };
-    }
-    BaseCtrl.prototype.someObject = {};
-    BaseCtrl.prototype.sharedSomething = function () {
-
-    };
-
-    AnotherCtrl.prototype = Object.create(BaseCtrl.prototype);
-
-    function AnotherCtrl () {
-      this.anotherSomething = function () {
-
-      };
-    }
-    ```
-
-  - Use `Object.create` with a polyfill for browser support
-
-  - **Zero-logic**: No logic inside a controller, delegate to services
-
-    ```javascript
-    // bad
-    function MainCtrl () {
-      this.doSomething = function () {
-
-      };
-    }
-
-    // good
-    function MainCtrl (SomeService) {
-      this.doSomething = SomeService.doSomething;
-    }
-    ```
-
-  - Think "skinny controller, fat service"
-
 **[Back to top](#table-of-contents)**
 
 ## Services
 
-  - Services are classes and are instantiated with the `new` keyword, use `this` for public methods and variables
+  - Prefer services over factories and providers.
 
     ```javascript
     function SomeService () {
@@ -199,57 +148,21 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
 **[Back to top](#table-of-contents)**
 
-## Factory
-
-  - **Singletons**: Factories are singletons, return a host Object inside each Factory to avoid primitive binding issues
-
-    ```javascript
-    // bad
-    function AnotherService () {
-      var someValue = '';
-      var someMethod = function () {
-
-      };
-      return {
-        someValue: someValue,
-        someMethod: someMethod
-      };
-    }
-
-    // good
-    function AnotherService () {
-      var AnotherService = {};
-      AnotherService.someValue = '';
-      AnotherService.someMethod = function () {
-
-      };
-      return AnotherService;
-    }
-    ```
-
-  - This way bindings are mirrored across the host Object, primitive values cannot update alone using the revealing module pattern
-
-**[Back to top](#table-of-contents)**
-
 ## Directives
 
-  - **Declaration restrictions**: Only use `custom element` and `custom attribute` methods for declaring your Directives (`{ restrict: 'EA' }`) depending on the Directive's role
+  - **Declaration restrictions**: Only use `custom element` and `custom attribute` methods for declaring your Directives (`restrict: 'EA'`) depending on the Directive's role
 
     ```html
     <!-- bad -->
-
-    <!-- directive: my-directive -->
     <div class="my-directive"></div>
 
     <!-- good -->
-
     <my-directive></my-directive>
-    <div my-directive></div>
     ```
 
-  - Comment and class name declarations are confusing and should be avoided. Comments do not play nicely with older versions of IE, using an attribute is the safest method for browser coverage.
+  - Comment and class name declarations are confusing and should be avoided.
 
-  - **Templating**: Use `Array.join('')` for clean templating
+  - **Templating**: Prefer external templates over inlined HTML
 
     ```javascript
     // bad
@@ -264,11 +177,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
     // good
     function someDirective () {
       return {
-        template: [
-          '<div class="some-directive">',
-            '<h1>My directive</h1>',
-          '</div>'
-        ].join('')
+        templateUrl: './templates/some-directive.html'
       };
     }
     ```
@@ -302,7 +211,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
       .directive('dragUpload', dragUpload);
     ```
 
-  - **Naming conventions**: Never `ng-*` prefix custom directives, they might conflict future native directives
+  - **Naming conventions**: Never `ng-*` prefix custom directives, they might conflict future native directives.
 
     ```javascript
     // bad
@@ -326,7 +235,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
   - Directives and Filters are the _only_ providers that we have the first letter as lowercase, this is due to strict naming conventions in Directives due to the way Angular translates `camelCase` to hyphenated, so `dragUpload` will become `<div drag-upload></div>` when used on an element.
 
-  - **controllerAs**: Use the `controllerAs` syntax inside Directives also
+  - **controllerAs**: Use the `controllerAs` syntax inside Directives also (*angular 1.2+ only*)
 
     ```javascript
     // bad
@@ -393,7 +302,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
 ## Routing resolves
 
-  - **Promises**: Resolve dependencies of a Controller in the `$routeProvider` (or `$stateProvider` for `ui-router`) not the Controller itself
+  - **Promises**: Resolve dependencies of a Controller in the `$routeProvider` not the Controller itself
 
     ```javascript
     // bad
@@ -475,7 +384,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
 ## Publish and subscribe events
 
-  - **$scope**: use the `$emit` and `$broadcast` methods to trigger events to direct relationship scopes only
+  - **$scope**: event emitters should be avoided when possible (prefer `$watch`es and 2-way binding instead). When necessary, use the `$emit` and `$broadcast` methods to trigger events to direct relationship scopes only.
 
     ```javascript
     // up the $scope
@@ -492,25 +401,12 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
     $rootScope.$emit('customEvent', data);
     ```
 
-  - Hint: `$rootScope.$on` listeners are different to `$scope.$on` listeners and will always persist so they need destroying when the relevant `$scope` fires the `$destroy` event
+  - Hint: `$rootScope.$on` listeners are different than `$scope.$on` listeners and will always persist so they need destroying when the relevant `$scope` fires the `$destroy` event
 
     ```javascript
     // call the closure
     var unbind = $rootScope.$on('customEvent'[, callback]);
     $scope.$on('$destroy', unbind);
-    ```
-
-  - For multiple `$rootScope` listeners, use an Object literal and loop each one on the `$destroy` event to unbind all automatically
-
-    ```javascript
-    var rootListeners = {
-      'customEvent1': $rootScope.$on('customEvent1'[, callback]),
-      'customEvent2': $rootScope.$on('customEvent2'[, callback]),
-      'customEvent3': $rootScope.$on('customEvent3'[, callback])
-    };
-    for (var unbind in rootListeners) {
-      $scope.$on('$destroy', rootListeners[unbind]);
-    }
     ```
 
 **[Back to top](#table-of-contents)**
@@ -543,7 +439,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
     }
     ```
 
-  - **$timeout and $interval**: Use `$timeout` and `$interval` over their native counterparts to keep Angular's two way data binding up to date
+  - **$timeout and $interval**: Use `$timeout` and `$interval` (*angular 1.2+ only*) over their native counterparts to automatically trigger digests when the timer fires
 
     ```javascript
     // bad
@@ -551,7 +447,9 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
       return {
         link: function (scope, element, attrs) {
           setTimeout(function () {
-            //
+            scope.$apply(function(){
+              ...
+            });
           }, 1000);
         }
       };
@@ -562,7 +460,7 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
       return {
         link: function (scope, element, attrs, $timeout) {
           $timeout(function () {
-            //
+            ...
           }, 1000);
         }
       };
@@ -603,33 +501,32 @@ From my experience with [Angular](//angularjs.org), [several talks](https://spea
 
 ## Minification and annotation
 
-  - **ng-annotate**: Use [ng-annotate](//github.com/olov/ng-annotate) for Gulp as `ng-min` is deprecated and comment functions that need automated dependency injection using `/** @ngInject */`
+  - **ng-annotate**: Use [ng-annotate](//github.com/olov/ng-annotate) and comment functions that need automated dependency injection using `/* @ngInject */`
 
     ```javascript
-    /**
-     * @ngInject
-     */
-    function MainCtrl (SomeService) {
+    // controller.js
+    module.exports = /* @ngInject */ function (SomeService) {
       this.doSomething = SomeService.doSomething;
     }
+
+    // app.js
     angular
       .module('app')
-      .controller('MainCtrl', MainCtrl);
+      .controller('MainCtrl', require('./controllers/controller'));
     ```
 
-  - Which produces the following output with the `$inject` annotation
+  - Which ng-annotate compiles to the following annotated code
 
     ```javascript
-    /**
-     * @ngInject
-     */
-    function MainCtrl (SomeService) {
+    // controller.js
+    module.exports = /* @ngInject */ ['SomeService', function (SomeService) {
       this.doSomething = SomeService.doSomething;
-    }
-    MainCtrl.$inject = ['SomeService'];
+    }];
+
+    // app.js
     angular
       .module('app')
-      .controller('MainCtrl', MainCtrl);
+      .controller('MainCtrl', require('./controllers/controller'));
     ```
 
 **[Back to top](#table-of-contents)**
