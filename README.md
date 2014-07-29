@@ -48,8 +48,6 @@ app/
 - Prefix all files with the module name to avoid name collisions when multiple modules are running within the same app
 - Suffix config, controller, factory, provider, run, and service file names with the type of angular construct (eg. `Factory`, `Service`, etc.)
 
-```
-
 ## Modules
 
   - **Definitions**: Declare modules without a variable using the setter and getter syntax
