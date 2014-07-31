@@ -27,6 +27,8 @@ app/
 |_module1/
   |_configs/
     |_module1RoutesConfig.js
+  |_constants/
+    |_module1Constant.js
   |_controllers/
     |_module1BarController.js
     |_module1FooController.js
@@ -44,9 +46,12 @@ app/
 |_app.js
 ```
 
+- Avoid empty folders
+- All folder and file names should be in camelCase
 - Put all angular blocks (controllers, directives, services, etc.) in their own files and `require()` them from their module's app.js
 - Prefix all files with the module name to avoid name collisions when multiple modules are running within the same app
 - Suffix config, controller, factory, provider, run, and service file names with the type of angular construct (eg. `Factory`, `Service`, etc.)
+- Pieces of code that are shared between modules should live in their own repositories, and be installed and managed with bower. If a piece of code is too small or too specific to be separated, it should live in a shared/ folder (a sibling of your module folders)
 
 ## Modules
 
@@ -66,6 +71,20 @@ app/
     ```
 
   - Note: Using `angular.module('app', []);` sets a module, whereas `angular.module('app');` gets the module. Only set once and get for all other instances.
+
+  - When creating modules for open source use, be sure to prefix the module name with "turn/"
+
+  ```js
+    // bad
+    angular
+    .module('foo', [])
+    ...
+
+    // good
+    angular
+    .module('turn/foo', [])
+    ...
+  ```
 
   - **Methods**: Pass requires into module methods rather than assign as an inline callback
 
@@ -91,7 +110,25 @@ app/
 
 **[Back to top](#table-of-contents)**
 
-## Controllers (*angular 1.2+ only*)
+## Controllers
+
+- **Methods**: When assigning methods or propeties to the scope, prefer `extend` syntax over direct assignment:
+
+```js
+// bad
+$scope.foo = 1;
+$scope.bar = 2;
+$scope.baz = function () { ... };
+
+// good
+angular.extend($scope, {
+  foo: 1,
+  bar: 2,
+  baz: function () { ... }
+})
+```
+
+### *angular 1.2+ only:*
 
   - **controllerAs syntax**: Controllers are classes, so use the `controllerAs` syntax at all times
 
@@ -161,7 +198,7 @@ app/
 
   - Comment and class name declarations are confusing and should be avoided.
 
-  - **Templating**: Prefer external templates over inlined HTML
+  - **Templating**: Prefer external templates over inlined HTML. Template names should be the dash-cased equivalents of their directive names.
 
     ```javascript
     // bad
@@ -231,8 +268,6 @@ app/
       .module('app')
       .directive('dragUpload', dragUpload);
     ```
-
-  - Directives and Filters are the _only_ providers that we have the first letter as lowercase, this is due to strict naming conventions in Directives due to the way Angular translates `camelCase` to hyphenated, so `dragUpload` will become `<div drag-upload></div>` when used on an element.
 
   - **controllerAs**: Use the `controllerAs` syntax inside Directives also (*angular 1.2+ only*)
 
