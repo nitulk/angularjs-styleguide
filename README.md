@@ -1,10 +1,6 @@
 # AngularJS styleguide
 
-*Opinionated AngularJS styleguide for teams by [@toddmotto](//twitter.com/toddmotto)*
-
-From my experience with [Angular](//angularjs.org), [several talks](https://speakerdeck.com/toddmotto) and working in teams, here's my opinionated styleguide for syntax, building and structuring Angular applications.
-
-> See the [original article](http://toddmotto.com/opinionated-angular-js-styleguide-for-teams)
+The Turn AngularJS styleguide (based off [this](https://github.com/toddmotto/angularjs-styleguide)).
 
 ## Table of Contents
   
@@ -52,6 +48,7 @@ app/
 - Prefix all files with the module name to avoid name collisions when multiple modules are running within the same app
 - Suffix config, controller, factory, provider, run, and service file names with the type of angular construct (eg. `Factory`, `Service`, etc.)
 - Pieces of code that are shared between modules should live in their own repositories, and be installed and managed with bower. If a piece of code is too small or too specific to be separated, it should live in a shared/ folder (a sibling of your module folders)
+- Each module should have an app.js, which is its entry point.
 
 ## Modules
 
